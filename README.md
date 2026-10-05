@@ -1,4 +1,4 @@
-# Hisaab — Freelancer Tax Companion
+# Hisaab - Freelancer Tax Companion
 
 A Flutter app for Pakistani freelancers (Fiverr, Upwork, direct clients) who
 get paid via Payoneer, Wise, or bank transfer. Log payments, track the
