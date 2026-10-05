@@ -5,6 +5,7 @@ import '../models/transaction.dart';
 import '../services/tax_engine.dart';
 import '../widgets/section_card.dart';
 import '../widgets/compliance_ring.dart';
+import '../widgets/channel_breakdown_bar.dart';
 import 'add_transaction_screen.dart';
 
 class DashboardScreen extends StatelessWidget {
@@ -12,6 +13,7 @@ class DashboardScreen extends StatelessWidget {
   final TaxYearRange selectedYear;
   final TaxSummary summary;
   final int transactionCount;
+  final List<TaxTransaction> transactions;
   final void Function(TaxYearRange) onChangeYear;
   final void Function(TaxTransaction) onAddTransaction;
 
@@ -21,6 +23,7 @@ class DashboardScreen extends StatelessWidget {
     required this.selectedYear,
     required this.summary,
     required this.transactionCount,
+    required this.transactions,
     required this.onChangeYear,
     required this.onAddTransaction,
   });
@@ -109,6 +112,12 @@ class DashboardScreen extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 16),
+        if (transactions.isNotEmpty) ...[
+          SectionCard(
+            child: ChannelBreakdownBar(transactions: transactions),
+          ),
+          const SizedBox(height: 16),
+        ],
         SectionCard(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -148,8 +157,78 @@ class DashboardScreen extends StatelessWidget {
           textAlign: TextAlign.center,
           style: AppText.body(context, size: 12, color: context.colors.muted),
         ),
+        if (transactions.isNotEmpty) ...[
+          const SizedBox(height: 32),
+          Text('Recent Transactions', style: AppText.display(context, size: 18)),
+          const SizedBox(height: 12),
+          ..._buildRecentTransactions(context),
+        ],
       ],
     );
+  }
+
+  List<Widget> _buildRecentTransactions(BuildContext context) {
+    final sorted = [...transactions]..sort((a, b) => b.date.compareTo(a.date));
+    final recent = sorted.take(3).toList();
+    final dateFmt = DateFormat('d MMM yyyy');
+
+    return recent.map((t) {
+      return Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: context.colors.white,
+          borderRadius: BorderRadius.circular(18),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 10,
+              height: 10,
+              decoration: BoxDecoration(color: _channelColor(context, t.channel), shape: BoxShape.circle),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(t.channel.label, style: AppText.body(context, size: 13.5, weight: FontWeight.w700)),
+                  const SizedBox(height: 2),
+                  Text(
+                    t.note.isEmpty ? dateFmt.format(t.date) : '${dateFmt.format(t.date)} · ${t.note}',
+                    style: AppText.body(context, size: 11.5, color: context.colors.muted),
+                  ),
+                ],
+              ),
+            ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(_currency.format(t.amountPkr), style: AppText.mono(context, size: 13, weight: FontWeight.w700)),
+                if (t.originalAmount > 0)
+                  Text(
+                    '${t.originalAmount} ${t.originalCurrency}',
+                    style: AppText.mono(context, size: 10, color: context.colors.muted),
+                  ),
+              ],
+            ),
+          ],
+        ),
+      );
+    }).toList();
+  }
+
+  Color _channelColor(BuildContext context, IncomeChannel c) {
+    switch (c) {
+      case IncomeChannel.payoneer:
+        return context.colors.teal;
+      case IncomeChannel.wise:
+        return context.colors.navy;
+      case IncomeChannel.pakistaniBank:
+        return context.colors.gold;
+      case IncomeChannel.other:
+        return context.colors.rose;
+    }
   }
 
   Widget _statCard(BuildContext context, String label, String value, IconData icon) {

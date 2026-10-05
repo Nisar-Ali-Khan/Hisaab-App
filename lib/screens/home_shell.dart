@@ -85,6 +85,7 @@ class _HomeShellState extends State<HomeShell> {
         selectedYear: selectedYear,
         summary: summary,
         transactionCount: yearTransactions.length,
+        transactions: yearTransactions,
         onChangeYear: changeSelectedYear,
         onAddTransaction: addTransaction,
       ),
